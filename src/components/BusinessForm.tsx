@@ -27,6 +27,7 @@ interface BusinessFormData {
   tiktokUrl: string;
   startingPrice: string;
   numberOfFields: string;
+  fieldDetails: Array<{ name: string; price: string }>;
   options: string[];
   onlineShopOption: string;
   paymentOption: string;
@@ -100,6 +101,7 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
     tiktokUrl: editingBusiness?.tiktok_url || "",
     startingPrice: editingBusiness?.starting_price || "",
     numberOfFields: editingBusiness?.number_of_fields || "1",
+    fieldDetails: editingBusiness?.field_details || [{ name: "", price: "" }],
     options: editingBusiness?.business_options || [],
     onlineShopOption: "sure",
     paymentOption: "bank",
@@ -259,6 +261,36 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
     const location = locations.find(loc => loc.province_district === province);
     setAvailableTowns(location?.towns || []);
   };
+
+  const handleFieldDetailsChange = (index: number, field: 'name' | 'price', value: string) => {
+    setFormData(prev => {
+      const newFieldDetails = [...prev.fieldDetails];
+      newFieldDetails[index] = { ...newFieldDetails[index], [field]: value };
+      return { ...prev, fieldDetails: newFieldDetails };
+    });
+  };
+
+  // Update field details array when numberOfFields changes
+  useEffect(() => {
+    const numFields = parseInt(formData.numberOfFields) || 1;
+    const currentFieldsCount = formData.fieldDetails.length;
+    
+    if (numFields !== currentFieldsCount) {
+      setFormData(prev => {
+        const newFieldDetails = [...prev.fieldDetails];
+        if (numFields > currentFieldsCount) {
+          // Add new fields
+          for (let i = currentFieldsCount; i < numFields; i++) {
+            newFieldDetails.push({ name: "", price: "" });
+          }
+        } else {
+          // Remove excess fields
+          newFieldDetails.splice(numFields);
+        }
+        return { ...prev, fieldDetails: newFieldDetails };
+      });
+    }
+  }, [formData.numberOfFields]);
 
   const handleOptionChange = (option: string, checked: boolean) => {
     setFormData(prev => ({
@@ -489,6 +521,43 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
                 <SelectItem value="5">5</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Field Details */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium text-foreground">
+              Give each field a unique name (e.g., Field 1, Futsal 1, Grass Field, 11-a-side Pitch) and set its hourly price. This is essential for tracking your bookings and revenue per field.
+            </Label>
+            <div className="space-y-4 p-4 border-2 border-border/60 rounded-lg bg-card">
+              {formData.fieldDetails.map((field, index) => (
+                <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor={`field-name-${index}`} className="text-xs text-muted-foreground">
+                      Field {index + 1} Name *
+                    </Label>
+                    <Input
+                      id={`field-name-${index}`}
+                      value={field.name}
+                      onChange={(e) => handleFieldDetailsChange(index, 'name', e.target.value)}
+                      placeholder={`e.g., Field ${index + 1} or Futsal ${index + 1}`}
+                      className="border-2 border-border/60 bg-card shadow-sm focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all duration-200"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor={`field-price-${index}`} className="text-xs text-muted-foreground">
+                      Hourly Price *
+                    </Label>
+                    <Input
+                      id={`field-price-${index}`}
+                      value={field.price}
+                      onChange={(e) => handleFieldDetailsChange(index, 'price', e.target.value)}
+                      placeholder="e.g., $50 or 50,000 MMK"
+                      className="border-2 border-border/60 bg-card shadow-sm focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all duration-200"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Opening Hours and Price/hour section */}
