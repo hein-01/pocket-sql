@@ -28,6 +28,7 @@ interface BusinessFormData {
   startingPrice: string;
   numberOfFields: string;
   fieldDetails: Array<{ name: string; price: string }>;
+  paymentMethods: string[];
   options: string[];
   onlineShopOption: string;
   paymentOption: string;
@@ -102,6 +103,7 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
     startingPrice: editingBusiness?.starting_price || "",
     numberOfFields: editingBusiness?.number_of_fields || "1",
     fieldDetails: editingBusiness?.field_details || [{ name: "", price: "" }],
+    paymentMethods: editingBusiness?.payment_methods || [],
     options: editingBusiness?.business_options || [],
     onlineShopOption: "sure",
     paymentOption: "bank",
@@ -301,6 +303,15 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
     }));
   };
 
+  const handlePaymentMethodChange = (method: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      paymentMethods: checked 
+        ? [...prev.paymentMethods, method]
+        : prev.paymentMethods.filter(m => m !== method)
+    }));
+  };
+
 
 
   const handleProductImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -439,6 +450,7 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
         tiktok_url: formData.tiktokUrl || null,
         starting_price: formData.startingPrice || null,
         number_of_fields: parseInt(formData.numberOfFields),
+        payment_methods: formData.paymentMethods.length > 0 ? formData.paymentMethods : null,
         business_options: formData.options.length > 0 ? formData.options : null,
         opening_hours: JSON.stringify(formData.openingHours),
         product_images: allProductImages.length > 0 ? allProductImages : null,
@@ -560,33 +572,31 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
             </div>
           </div>
 
-          {/* Opening Hours and Price/hour section */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Opening Hours */}
-            <div className="space-y-4">
-              <Label className="text-sm font-medium text-foreground">Opening Hours *</Label>
-              <div className="space-y-4 p-4 border-2 border-border/60 rounded-lg bg-card">
-                {Object.entries(formData.openingHours).map(([day, hours]) => (
-                  <div key={day} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
-                    <div className="flex items-center space-x-2">
-                      <Label className="text-sm font-medium capitalize min-w-[80px]">{day}:</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`${day}-closed`}
-                        checked={hours.closed}
-                        onCheckedChange={(checked) => handleDayClosedChange(day, checked as boolean)}
-                        className="border-2 border-border/60"
-                      />
-                      <Label htmlFor={`${day}-closed`} className="text-sm">Closed</Label>
-                    </div>
-                    {!hours.closed && (
-                      <>
-                        <div className="space-y-1">
-                          <Label className="text-xs text-muted-foreground">Open</Label>
-                          <Input
-                            type="time"
-                            value={hours.open}
+          {/* Opening Hours */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium text-foreground">Opening Hours *</Label>
+            <div className="space-y-4 p-4 border-2 border-border/60 rounded-lg bg-card">
+              {Object.entries(formData.openingHours).map(([day, hours]) => (
+                <div key={day} className="grid grid-cols-1 md:grid-cols-4 gap-3 items-center">
+                  <div className="flex items-center space-x-2">
+                    <Label className="text-sm font-medium capitalize min-w-[80px]">{day}:</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`${day}-closed`}
+                      checked={hours.closed}
+                      onCheckedChange={(checked) => handleDayClosedChange(day, checked as boolean)}
+                      className="border-2 border-border/60"
+                    />
+                    <Label htmlFor={`${day}-closed`} className="text-sm">Closed</Label>
+                  </div>
+                  {!hours.closed && (
+                    <>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Open</Label>
+                        <Input
+                          type="time"
+                          value={hours.open}
                           onChange={(e) => handleOpeningHoursChange(day, 'open', e.target.value)}
                           className="border-2 border-border/60 bg-card shadow-sm focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all duration-200"
                         />
@@ -600,23 +610,30 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
                           className="border-2 border-border/60 bg-card shadow-sm focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all duration-200"
                         />
                       </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
+                    </>
+                  )}
+                </div>
+              ))}
             </div>
+          </div>
 
-            {/* Price/hour */}
-            <div className="space-y-3">
-              <Label htmlFor="startingPrice" className="text-sm font-medium text-foreground">Price/hour *</Label>
-              <Input
-                id="startingPrice"
-                value={formData.startingPrice}
-                onChange={(e) => handleInputChange('startingPrice', e.target.value)}
-                placeholder="e.g., $50"
-                className="border-2 border-border/60 bg-card shadow-sm focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all duration-200 hover:border-border/80"
-              />
+          {/* Payment Methods for Bookings */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium text-foreground">Which payment methods do you accept for bookings?</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-2 border-border/60 rounded-lg bg-card">
+              {['Cash on Arrival', 'WeChat Pay', 'KPay', 'Paylah'].map((method) => (
+                <div key={method} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={method}
+                    checked={formData.paymentMethods.includes(method)}
+                    onCheckedChange={(checked) => handlePaymentMethodChange(method, checked as boolean)}
+                    className="border-2 border-border/60"
+                  />
+                  <Label htmlFor={method} className="text-sm">
+                    {method}
+                  </Label>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -939,39 +956,6 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
             </div>
           </div>
 
-          {/* Online Shop + POS Option */}
-          <div className="space-y-4">
-            <Label>Online Shop + POS Option</Label>
-            <RadioGroup
-              value={formData.onlineShopOption}
-              onValueChange={(value) => handleInputChange('onlineShopOption', value)}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="sure" id="sure" />
-                <Label htmlFor="sure">Sure</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="maybe" id="maybe" />
-                <Label htmlFor="maybe">Maybe Later</Label>  
-              </div>
-            </RadioGroup>
-
-            {formData.onlineShopOption === 'sure' && (
-              <div className="ml-6 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-800 font-medium">
-                  Within 48 hours, your online shop website and POS (plus other apps like Inventory and Sales) will be ready. We'll send you the link, login details, and detailed instructions in an email. The total is 10 USD. You can choose the suitable payment options below.
-                </p>
-              </div>
-            )}
-
-            {formData.onlineShopOption === 'maybe' && (
-              <div className="ml-6 p-3 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-800 font-medium">
-                  The total is 10 USD. Please choose the suitable payment options below.
-                </p>
-              </div>
-            )}
-          </div>
 
           {/* Payment Options */}
           <div className="space-y-4">
