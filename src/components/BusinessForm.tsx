@@ -29,6 +29,7 @@ interface BusinessFormData {
   numberOfFields: string;
   fieldDetails: Array<{ name: string; price: string }>;
   paymentMethods: string[];
+  facilities: string[];
   options: string[];
   onlineShopOption: string;
   paymentOption: string;
@@ -104,6 +105,7 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
     numberOfFields: editingBusiness?.number_of_fields || "1",
     fieldDetails: editingBusiness?.field_details || [{ name: "", price: "" }],
     paymentMethods: editingBusiness?.payment_methods || [],
+    facilities: editingBusiness?.facilities || [],
     options: editingBusiness?.business_options || [],
     onlineShopOption: "sure",
     paymentOption: "bank",
@@ -312,6 +314,15 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
     }));
   };
 
+  const handleFacilityChange = (facility: string, checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      facilities: checked 
+        ? [...prev.facilities, facility]
+        : prev.facilities.filter(f => f !== facility)
+    }));
+  };
+
 
 
   const handleProductImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -451,6 +462,7 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
         starting_price: formData.startingPrice || null,
         number_of_fields: parseInt(formData.numberOfFields),
         payment_methods: formData.paymentMethods.length > 0 ? formData.paymentMethods : null,
+        facilities: formData.facilities.length > 0 ? formData.facilities : null,
         business_options: formData.options.length > 0 ? formData.options : null,
         opening_hours: JSON.stringify(formData.openingHours),
         product_images: allProductImages.length > 0 ? allProductImages : null,
@@ -631,6 +643,39 @@ export default function BusinessForm({ onSuccess, editingBusiness }: BusinessFor
                   />
                   <Label htmlFor={method} className="text-sm">
                     {method}
+                  </Label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Facilities and Rules */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium text-foreground">Please list the rules and regulations for players</Label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-2 border-border/60 rounded-lg bg-card">
+              {[
+                'Changing Rooms /Locker Rooms',
+                'Equipment Rental (Futsal shoes, ball rental)',
+                'Shop / Kiosk (selling drinks, snacks, sports gear)',
+                'Drinking Water',
+                'First Aid Kit',
+                'CCTV Security',
+                'Toilets',
+                'Car Parking',
+                'Free Wi-Fi',
+                'Floodlights (for night games)',
+                'Seating Area / Bleachers',
+                'Near Metro/Bus Stop'
+              ].map((facility) => (
+                <div key={facility} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={facility}
+                    checked={formData.facilities.includes(facility)}
+                    onCheckedChange={(checked) => handleFacilityChange(facility, checked as boolean)}
+                    className="border-2 border-border/60"
+                  />
+                  <Label htmlFor={facility} className="text-sm">
+                    {facility}
                   </Label>
                 </div>
               ))}
